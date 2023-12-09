@@ -4,7 +4,7 @@ This project is designed for a special person, capable of easily filtering text 
 
 ## Usage
 
-To filter predefined words listed in the `query.txt` file inside the inputs folder, run
+To filter predefined words listed in the `query.txt` file inside the `inputs` folder, run
 
 ```
 python filtered_words.py
