@@ -1,15 +1,16 @@
-
 import docx
-import os
 from underthesea import sent_tokenize
+import pandas as pd
+import os
 import shutil
 import re
+from os.path import join
 
+
+data = []
 
 def read_doc(file_path):
-    """
-    Read a Word document and return a list of tokenized sentences.
-    """
+    # Read a Word document and return a list of tokenized sentences.
     document = docx.Document(file_path)
     sentences = [sentence for paragraph in document.paragraphs for sentence in sent_tokenize(paragraph.text)]
     sentences = [s.lower() for s in sentences if s != ""]
@@ -20,7 +21,8 @@ def extract(input_files, output_dir, terms_group):
         os.makedirs(output_dir)
 
     for input_file in input_files:
-        sentences = read_doc(input_file)
+        input_filepath = join("inputs", input_file)
+        sentences = read_doc(input_filepath)
 
         for words in terms_group:
             filtered_texts = []
@@ -49,12 +51,18 @@ def extract(input_files, output_dir, terms_group):
                 if not os.path.exists(subfolder):
                     os.makedirs(subfolder)
 
-                file_name = os.path.basename(input_file)
+                file_name = os.path.basename(input_filepath)
                 output_file = os.path.join(subfolder, file_name + '.txt')
 
                 with open(output_file, 'w') as f:
                     for text in filtered_texts:
-                        f.write(text + '\n\n')
+                        f.write(text + '\n')
+                
+                data.append({
+                    "term": filename,
+                    "file": input_file,
+                    "n": len(filtered_texts)
+                })
 
 input_dir = "inputs"
 output_dir = "outputs"
@@ -64,9 +72,13 @@ if os.path.exists(output_dir) and os.path.isdir(output_dir):
     shutil.rmtree(output_dir)
 os.makedirs(output_dir)
 
-input_files = [os.path.join(input_dir, file) for file in os.listdir(input_dir) if file.endswith(".docx")]
+input_files = [file for file in os.listdir(input_dir) if file.endswith(".docx")]
 
 with open("query.txt", "r") as f:
     terms_group = [line.split(",") for line in f.read().splitlines() if line != ""]
 
 extract(input_files, output_dir, terms_group)
+
+df = pd.DataFrame(data)
+df.to_csv("result.csv", index=False, encoding="utf-8")
+print(df)
